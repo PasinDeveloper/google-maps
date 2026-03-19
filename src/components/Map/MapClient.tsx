@@ -67,12 +67,16 @@ export default function MapClient({
   renderMarker,
 }: MapClientProps) {
   const [selectedId, setSelectedId] = useState<string | number | null>(null);
+  const [shouldZoomToSelectedMarker, setShouldZoomToSelectedMarker] =
+    useState(false);
 
   const handleMarkerClick = useCallback((id: string | number) => {
+    setShouldZoomToSelectedMarker(false);
     setSelectedId((prev) => (prev === id ? null : id));
   }, []);
 
   const handleCardClick = useCallback((id: string | number) => {
+    setShouldZoomToSelectedMarker(true);
     setSelectedId((prev) => (prev === id ? null : id));
   }, []);
 
@@ -107,6 +111,7 @@ export default function MapClient({
           <Map
             markers={markers}
             selectedMarkerId={selectedId}
+            shouldZoomToSelectedMarker={shouldZoomToSelectedMarker}
             onMarkerClick={handleMarkerClick}
             defaultCenter={defaultCenter}
             defaultZoom={defaultZoom}

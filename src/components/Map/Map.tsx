@@ -32,6 +32,7 @@ export interface MarkerRenderProps {
 export interface MapProps {
   markers: readonly MarkerData[];
   selectedMarkerId?: string | number | null;
+  shouldZoomToSelectedMarker?: boolean;
   onMarkerClick?: (id: string | number) => void;
   onBoundsChange?: (bounds: google.maps.LatLngBoundsLiteral) => void;
   defaultCenter?: google.maps.LatLngLiteral;
@@ -41,6 +42,7 @@ export interface MapProps {
 
 const DEFAULT_CENTER: google.maps.LatLngLiteral = { lat: 51.0, lng: 10.0 };
 const DEFAULT_ZOOM = 4;
+const FOCUSED_MARKER_ZOOM = 15;
 const MAP_STYLES: google.maps.MapTypeStyle[] = [
   {
     featureType: "poi",
@@ -60,6 +62,7 @@ const MAP_STYLES: google.maps.MapTypeStyle[] = [
 export default function Map({
   markers,
   selectedMarkerId = null,
+  shouldZoomToSelectedMarker = false,
   onMarkerClick,
   onBoundsChange,
   defaultCenter = DEFAULT_CENTER,
@@ -67,6 +70,7 @@ export default function Map({
   renderMarker,
 }: MapProps) {
   const mapDivRef = useRef<HTMLDivElement>(null);
+  const animationFrameRef = useRef<number | null>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
 
   // Initialise the map once.
@@ -76,7 +80,7 @@ export default function Map({
       center: defaultCenter,
       zoom: defaultZoom,
       clickableIcons: false,
-      disableDefaultUI: false,
+      disableDefaultUI: true,
       styles: MAP_STYLES,
     });
     setMap(instance);
@@ -103,16 +107,82 @@ export default function Map({
     map.setZoom((map.getZoom() ?? defaultZoom) - 1);
   }, [defaultZoom, map]);
 
+  const animateMapCenter = useCallback(
+    (targetCenter: google.maps.LatLngLiteral, targetZoom?: number) => {
+      if (!map) return;
+
+      if (animationFrameRef.current !== null) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+      }
+
+      const startCenter = map.getCenter()?.toJSON() ?? defaultCenter;
+      const startZoom = map.getZoom() ?? defaultZoom;
+      const durationMs = 450;
+      const startTime = performance.now();
+
+      const easeInOutCubic = (progress: number) =>
+        progress < 0.5
+          ? 4 * progress * progress * progress
+          : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+      const step = (timestamp: number) => {
+        const elapsed = timestamp - startTime;
+        const progress = Math.min(elapsed / durationMs, 1);
+        const easedProgress = easeInOutCubic(progress);
+
+        map.setCenter({
+          lat:
+            startCenter.lat +
+            (targetCenter.lat - startCenter.lat) * easedProgress,
+          lng:
+            startCenter.lng +
+            (targetCenter.lng - startCenter.lng) * easedProgress,
+        });
+
+        if (progress < 1) {
+          animationFrameRef.current = window.requestAnimationFrame(step);
+          return;
+        }
+
+        animationFrameRef.current = null;
+        map.setCenter(targetCenter);
+
+        if (targetZoom !== undefined) {
+          map.setZoom(Math.max(startZoom, targetZoom));
+        }
+      };
+
+      animationFrameRef.current = window.requestAnimationFrame(step);
+    },
+    [defaultCenter, defaultZoom, map],
+  );
+
   useMapEvents(map, "bounds_changed", handleBoundsChanged, 300);
 
-  // Pan to selected marker.
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current !== null) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
+  // Move to selected marker.
   useEffect(() => {
     if (!map || selectedMarkerId === null) return;
     const found = markers.find((m) => m.id === selectedMarkerId);
     if (found) {
+      if (shouldZoomToSelectedMarker) {
+        animateMapCenter(
+          { lat: found.lat, lng: found.lng },
+          FOCUSED_MARKER_ZOOM,
+        );
+        return;
+      }
+
       map.panTo({ lat: found.lat, lng: found.lng });
     }
-  }, [map, selectedMarkerId, markers]);
+  }, [animateMapCenter, map, markers, selectedMarkerId, shouldZoomToSelectedMarker]);
 
   const handleMarkerClick = useCallback(
     (id: string | number) => {
