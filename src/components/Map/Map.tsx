@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   MarkerClustererEvents,
   MarkerClusterer,
@@ -34,6 +40,7 @@ export interface MarkerRenderProps {
 export interface MapProps {
   markers: readonly MarkerData[];
   selectedMarkerId?: string | number | null;
+  zoomSelectedMarker?: boolean;
   onMarkerClick?: (id: string | number) => void;
   onBoundsChange?: (bounds: google.maps.LatLngBoundsLiteral) => void;
   defaultCenter?: google.maps.LatLngLiteral;
@@ -44,6 +51,7 @@ export interface MapProps {
 
 const DEFAULT_CENTER: google.maps.LatLngLiteral = { lat: 51.0, lng: 10.0 };
 const DEFAULT_ZOOM = 4;
+const SELECTED_MARKER_ZOOM = 14;
 const MAP_STYLES: google.maps.MapTypeStyle[] = [
   {
     featureType: "poi",
@@ -93,6 +101,7 @@ class HtmlMarkerClusterer extends MarkerClusterer {
 export default function Map({
   markers,
   selectedMarkerId = null,
+  zoomSelectedMarker = false,
   onMarkerClick,
   onBoundsChange,
   defaultCenter = DEFAULT_CENTER,
@@ -105,9 +114,9 @@ export default function Map({
   const clustererRef = useRef<HtmlMarkerClusterer | null>(null);
   // Invisible marker placeholders used by the clusterer.
   const clusterMarkersRef = useRef<Marker[]>([]);
-  const [clusteredMarkerIds, setClusteredMarkerIds] = useState<ReadonlySet<string | number>>(
-    () => new Set(),
-  );
+  const [clusteredMarkerIds, setClusteredMarkerIds] = useState<
+    ReadonlySet<string | number>
+  >(() => new Set());
 
   // Initialise the map once.
   useEffect(() => {
@@ -116,7 +125,13 @@ export default function Map({
       center: defaultCenter,
       zoom: defaultZoom,
       clickableIcons: false,
-      disableDefaultUI: false,
+      disableDefaultUI: true,
+      streetViewControl: false,
+      mapTypeControl: false,
+      zoomControl: false,
+      fullscreenControl: false,
+      rotateControl: false,
+      scaleControl: false,
       styles: MAP_STYLES,
     });
     setMap(instance);
@@ -228,14 +243,22 @@ export default function Map({
     };
   }, [map, markers, enableClustering]);
 
-  // Pan to selected marker.
+  // Pan to the selected marker and optionally zoom in when the selection
+  // originates from the left-panel card list.
   useEffect(() => {
     if (!map || selectedMarkerId === null) return;
     const found = markers.find((m) => m.id === selectedMarkerId);
     if (found) {
       map.panTo({ lat: found.lat, lng: found.lng });
+
+      if (zoomSelectedMarker) {
+        const currentZoom = map.getZoom() ?? defaultZoom;
+        if (currentZoom < SELECTED_MARKER_ZOOM) {
+          map.setZoom(SELECTED_MARKER_ZOOM);
+        }
+      }
     }
-  }, [map, selectedMarkerId, markers]);
+  }, [map, selectedMarkerId, markers, zoomSelectedMarker, defaultZoom]);
 
   const handleMarkerClick = useCallback(
     (id: string | number) => {
@@ -244,6 +267,24 @@ export default function Map({
     [onMarkerClick],
   );
 
+  const handleZoomIn = useCallback(() => {
+    if (!map) {
+      return;
+    }
+
+    const currentZoom = map.getZoom() ?? defaultZoom;
+    map.setZoom(currentZoom + 1);
+  }, [map, defaultZoom]);
+
+  const handleZoomOut = useCallback(() => {
+    if (!map) {
+      return;
+    }
+
+    const currentZoom = map.getZoom() ?? defaultZoom;
+    map.setZoom(currentZoom - 1);
+  }, [map, defaultZoom]);
+
   return (
     <div className="map-container">
       <div ref={mapDivRef} className="map-canvas" />
@@ -251,14 +292,14 @@ export default function Map({
         markers
           .filter((marker) => !clusteredMarkerIds.has(marker.id))
           .map((marker) => (
-          <HtmlMarker
-            key={marker.id}
-            map={map}
-            marker={marker}
-            isSelected={marker.id === selectedMarkerId}
-            onClick={handleMarkerClick}
-            renderMarker={renderMarker}
-          />
+            <HtmlMarker
+              key={marker.id}
+              map={map}
+              marker={marker}
+              isSelected={marker.id === selectedMarkerId}
+              onClick={handleMarkerClick}
+              renderMarker={renderMarker}
+            />
           ))}
     </div>
   );
