@@ -1,103 +1,196 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+/**
+ * Demo page showing the Google Maps component with a synced left panel.
+ *
+ * Set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in your .env.local file to enable the map.
+ */
+
+import { MarkerData } from "@/components/Map/Map";
+import MapClient from "@/components/Map/MapClient";
+
+const SAMPLE_MARKERS: MarkerData[] = [
+  {
+    id: "1",
+    lat: 46.2044,
+    lng: 6.1432,
+    title: "Bel-Air",
+    description: "Central Geneva stop near the old town and shopping district.",
+  },
+  {
+    id: "2",
+    lat: 46.2067,
+    lng: 6.1462,
+    title: "Rive",
+    description:
+      "Busy lakeside transit hub connecting the city center to the east.",
+  },
+  {
+    id: "3",
+    lat: 46.2096,
+    lng: 6.1423,
+    title: "Molard",
+    description: "Historic square with dense foot traffic and retail frontage.",
+  },
+  {
+    id: "4",
+    lat: 46.1987,
+    lng: 6.1355,
+    title: "Plainpalais",
+    description:
+      "Student-heavy district with markets, trams, and civic events.",
+  },
+  {
+    id: "5",
+    lat: 46.2015,
+    lng: 6.1284,
+    title: "Uni Mail",
+    description:
+      "University quarter with broad sidewalks and steady daytime demand.",
+  },
+  {
+    id: "6",
+    lat: 46.2124,
+    lng: 6.1545,
+    title: "Eaux-Vives Gare",
+    description: "Modern station area with dense residential blocks nearby.",
+  },
+  {
+    id: "7",
+    lat: 46.2155,
+    lng: 6.1531,
+    title: "Parc La Grange",
+    description: "Green pocket above the lake with seasonal tourist activity.",
+  },
+  {
+    id: "8",
+    lat: 46.2178,
+    lng: 6.1477,
+    title: "Baby-Plage",
+    description: "Popular waterfront access point with strong summer footfall.",
+  },
+  {
+    id: "9",
+    lat: 46.2108,
+    lng: 6.1311,
+    title: "Cornavin",
+    description:
+      "Main rail station and one of the busiest interchanges in Geneva.",
+  },
+  {
+    id: "10",
+    lat: 46.2149,
+    lng: 6.1106,
+    title: "Nations",
+    description:
+      "International district with embassies, NGOs, and conference traffic.",
+  },
+  {
+    id: "11",
+    lat: 46.2112,
+    lng: 6.1167,
+    title: "Botanic Garden",
+    description: "Calmer lakeside edge with family-oriented destinations.",
+  },
+  {
+    id: "12",
+    lat: 46.2061,
+    lng: 6.1145,
+    title: "Pâquis",
+    description:
+      "Dense mixed-use neighborhood between the station and the lake.",
+  },
+  {
+    id: "13",
+    lat: 46.1991,
+    lng: 6.1487,
+    title: "Jet d'Eau",
+    description:
+      "Iconic waterfront landmark with heavy visitor demand all year.",
+  },
+  {
+    id: "14",
+    lat: 46.1953,
+    lng: 6.1516,
+    title: "Parc des Eaux-Vives",
+    description:
+      "Residential edge with gardens and event venues near the lake.",
+  },
+  {
+    id: "15",
+    lat: 46.1934,
+    lng: 6.1391,
+    title: "Bains des Pâquis",
+    description:
+      "Highly visited public bathing pier and food spot on the harbor.",
+  },
+  {
+    id: "16",
+    lat: 46.2078,
+    lng: 6.1599,
+    title: "Grange-Canal",
+    description: "Eastern corridor with residential density and local retail.",
+  },
+  {
+    id: "17",
+    lat: 46.1879,
+    lng: 6.1668,
+    title: "Chêne-Bourg",
+    description:
+      "Outer Geneva node tying urban neighborhoods to suburban flows.",
+  },
+  {
+    id: "18",
+    lat: 46.1938,
+    lng: 6.1218,
+    title: "Acacias",
+    description:
+      "Fast-changing district with offices, housing, and tram access.",
+  },
+  {
+    id: "19",
+    lat: 46.1865,
+    lng: 6.1328,
+    title: "Carouge Marché",
+    description:
+      "Compact artisan quarter just south of Geneva with strong local identity.",
+  },
+  {
+    id: "20",
+    lat: 46.2204,
+    lng: 6.0962,
+    title: "Petit-Saconnex",
+    description:
+      "Northwest residential zone with schools, parks, and local services.",
+  },
+];
+
+export default function HomePage() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main className="demo-layout">
+      <MapClient
+        markers={SAMPLE_MARKERS}
+        defaultCenter={{ lat: 46.2044, lng: 6.1432 }}
+        defaultZoom={13}
+        renderMarker={({ marker, isSelected }) => (
+          <article
+            className={`custom-marker-card${isSelected ? " custom-marker-card--selected" : ""}`}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+            <span className="custom-marker-card__eyebrow">Featured stop</span>
+            {marker.title ? (
+              <h2 className="custom-marker-card__title">{marker.title}</h2>
+            ) : null}
+            {marker.description ? (
+              <p className="custom-marker-card__description">
+                {marker.description}
+              </p>
+            ) : null}
+            <span className="custom-marker-card__coords">
+              {marker.lat.toFixed(4)}, {marker.lng.toFixed(4)}
+            </span>
+          </article>
+        )}
+      />
+    </main>
   );
 }
