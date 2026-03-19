@@ -5,7 +5,7 @@ import "@/app/globals.css";
 export const metadata: Metadata = {
   title: "Google Maps Next.js Demo",
   description:
-    "A demo of Google Maps integration with Next.js 15, featuring custom HTML markers, clustering, and two-way panel sync.",
+    "A demo of Google Maps integration with Next.js 15, featuring custom HTML markers and two-way panel sync.",
 };
 
 export default function RootLayout({

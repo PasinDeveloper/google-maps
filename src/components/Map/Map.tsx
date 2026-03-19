@@ -1,14 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import {
-  MarkerClustererEvents,
-  MarkerClusterer,
-  MarkerUtils,
-  type Cluster,
-  type Marker,
-  type Renderer,
-} from "@googlemaps/markerclusterer";
 import { useFitBounds } from "@/hooks/useFitBounds";
 import { useMapEvents } from "@/hooks/useMapEvents";
 import HtmlMarker from "./HtmlMarker";
@@ -38,7 +30,6 @@ export interface MapProps {
   onBoundsChange?: (bounds: google.maps.LatLngBoundsLiteral) => void;
   defaultCenter?: google.maps.LatLngLiteral;
   defaultZoom?: number;
-  enableClustering?: boolean;
   renderMarker?: (props: MarkerRenderProps) => ReactNode;
 }
 
@@ -55,36 +46,6 @@ const MAP_STYLES: google.maps.MapTypeStyle[] = [
   },
 ];
 
-const clusterRenderer: Renderer = {
-  render({ count, position }: Cluster) {
-    return new google.maps.Marker({
-      position,
-      zIndex: Number(google.maps.Marker.MAX_ZINDEX) + count,
-      icon: {
-        path: google.maps.SymbolPath.CIRCLE,
-        fillColor: "#2563eb",
-        fillOpacity: 0.92,
-        strokeColor: "#ffffff",
-        strokeOpacity: 1,
-        strokeWeight: 2,
-        scale: 22,
-      },
-      label: {
-        text: String(count),
-        color: "#ffffff",
-        fontSize: "12px",
-        fontWeight: "700",
-      },
-    });
-  },
-};
-
-class HtmlMarkerClusterer extends MarkerClusterer {
-  getCurrentClusters(): readonly Cluster[] {
-    return this.clusters;
-  }
-}
-
 /**
  * Core map component.
  * Must be rendered inside an already-loaded Google Maps context
@@ -97,17 +58,10 @@ export default function Map({
   onBoundsChange,
   defaultCenter = DEFAULT_CENTER,
   defaultZoom = DEFAULT_ZOOM,
-  enableClustering = true,
   renderMarker,
 }: MapProps) {
   const mapDivRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const clustererRef = useRef<HtmlMarkerClusterer | null>(null);
-  // Invisible marker placeholders used by the clusterer.
-  const clusterMarkersRef = useRef<Marker[]>([]);
-  const [clusteredMarkerIds, setClusteredMarkerIds] = useState<ReadonlySet<string | number>>(
-    () => new Set(),
-  );
 
   // Initialise the map once.
   useEffect(() => {
@@ -133,100 +87,17 @@ export default function Map({
     if (bounds) onBoundsChange(bounds.toJSON());
   }, [map, onBoundsChange]);
 
-  useMapEvents(map, "bounds_changed", handleBoundsChanged, 300);
-
-  // Keep clustering placeholders in sync with markers.
-  useEffect(() => {
+  const handleZoomIn = useCallback(() => {
     if (!map) return;
+    map.setZoom((map.getZoom() ?? defaultZoom) + 1);
+  }, [defaultZoom, map]);
 
-    // If clustering is disabled, tear down any existing clusterer and placeholders.
-    if (!enableClustering) {
-      if (clustererRef.current) {
-        clustererRef.current.clearMarkers();
-        // Detach the clusterer from the map entirely.
-        clustererRef.current.setMap(null);
-        clustererRef.current = null;
-      }
-      for (const m of clusterMarkersRef.current) {
-        MarkerUtils.setMap(m, null);
-      }
-      clusterMarkersRef.current = [];
-      setClusteredMarkerIds(new Set());
-      return;
-    }
+  const handleZoomOut = useCallback(() => {
+    if (!map) return;
+    map.setZoom((map.getZoom() ?? defaultZoom) - 1);
+  }, [defaultZoom, map]);
 
-    // Clean up old placeholders.
-    for (const m of clusterMarkersRef.current) {
-      MarkerUtils.setMap(m, null);
-    }
-    clusterMarkersRef.current = [];
-
-    // Create invisible legacy markers so MarkerClusterer can track positions
-    // without requiring a vector map ID for AdvancedMarkerElement support.
-    const markerIdsByPlaceholder = new WeakMap<Marker, string | number>();
-    const placeholders = markers.map((m) => {
-      const placeholder = new google.maps.Marker({
-        position: { lat: m.lat, lng: m.lng },
-        map: null,
-        clickable: false,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 0,
-          fillOpacity: 0,
-          strokeOpacity: 0,
-        },
-        opacity: 0,
-        zIndex: -1000,
-      });
-      markerIdsByPlaceholder.set(placeholder, m.id);
-      return placeholder;
-    });
-    clusterMarkersRef.current = placeholders;
-
-    const syncClusterVisibility = () => {
-      const hiddenIds = new Set<string | number>();
-      for (const cluster of clustererRef.current?.getCurrentClusters() ?? []) {
-        if (cluster.count <= 1) {
-          continue;
-        }
-
-        for (const clusterMarker of cluster.markers) {
-          const markerId = markerIdsByPlaceholder.get(clusterMarker);
-          if (markerId !== undefined) {
-            hiddenIds.add(markerId);
-          }
-        }
-      }
-
-      setClusteredMarkerIds(hiddenIds);
-    };
-
-    if (!clustererRef.current) {
-      clustererRef.current = new HtmlMarkerClusterer({
-        map,
-        markers: placeholders,
-        renderer: clusterRenderer,
-      });
-    } else {
-      clustererRef.current.clearMarkers();
-      clustererRef.current.addMarkers(placeholders);
-    }
-
-    const listener = clustererRef.current.addListener(
-      MarkerClustererEvents.CLUSTERING_END,
-      syncClusterVisibility,
-    );
-    clustererRef.current.render();
-
-    return () => {
-      listener.remove();
-      clustererRef.current?.clearMarkers();
-      for (const m of clusterMarkersRef.current) {
-        MarkerUtils.setMap(m, null);
-      }
-      setClusteredMarkerIds(new Set());
-    };
-  }, [map, markers, enableClustering]);
+  useMapEvents(map, "bounds_changed", handleBoundsChanged, 300);
 
   // Pan to selected marker.
   useEffect(() => {
@@ -282,9 +153,7 @@ export default function Map({
         </button>
       </div>
       {map &&
-        markers
-          .filter((marker) => !clusteredMarkerIds.has(marker.id))
-          .map((marker) => (
+        markers.map((marker) => (
           <HtmlMarker
             key={marker.id}
             map={map}

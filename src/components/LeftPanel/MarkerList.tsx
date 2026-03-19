@@ -133,10 +133,10 @@ export default function MarkerList({
                 <motion.button
                   ref={(node) => setCardRef(marker.id, node)}
                   className={clsx(
-                    "flex w-full cursor-pointer items-start gap-2.5 rounded-xl border bg-white p-3 text-left transition-colors transition-shadow duration-150",
-                    "border-slate-200 shadow-sm hover:border-blue-500 hover:shadow-[0_2px_8px_rgba(66,133,244,0.18)]",
-                    isSelected &&
-                      "border-blue-500 bg-blue-50 shadow-[0_2px_10px_rgba(66,133,244,0.25)]",
+                    "flex w-full cursor-pointer items-start gap-2.5 rounded-xl border bg-white p-3 text-left transition-[colors,shadow] duration-150 ",
+                    isSelected
+                      ? "border-blue-500 bg-blue-50 shadow-md shadow-blue-500"
+                      : "border-slate-200 shadow-sm hover:border-blue-500 hover:shadow-sm",
                   )}
                   variants={selectedVariants}
                   animate={isSelected ? "selected" : "rest"}

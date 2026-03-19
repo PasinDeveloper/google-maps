@@ -11,7 +11,6 @@ interface MapClientProps {
   markers: readonly MarkerData[];
   defaultCenter?: google.maps.LatLngLiteral;
   defaultZoom?: number;
-  enableClustering?: boolean;
   renderMarker?: (props: MarkerRenderProps) => ReactNode;
 }
 
@@ -23,7 +22,7 @@ function MapStatusView({ status }: { readonly status: Status }) {
 
   if (isLoading) {
     return (
-      <div className="flex h-full min-h-[200px] flex-col items-center justify-center gap-3 p-6 text-center text-slate-600">
+      <div className="flex h-full min-h-50 flex-col items-center justify-center gap-3 p-6 text-center text-slate-600">
         <div
           className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-blue-500"
           aria-label="Loading map…"
@@ -36,7 +35,7 @@ function MapStatusView({ status }: { readonly status: Status }) {
   if (isError) {
     return (
       <div
-        className="flex h-full min-h-[200px] flex-col items-center justify-center gap-3 bg-rose-50 p-6 text-center text-rose-700"
+        className="flex h-full min-h-50 flex-col items-center justify-center gap-3 bg-rose-50 p-6 text-center text-rose-700"
         role="alert"
       >
         <p>
@@ -65,26 +64,22 @@ export default function MapClient({
   markers,
   defaultCenter,
   defaultZoom,
-  enableClustering = true,
   renderMarker,
 }: MapClientProps) {
   const [selectedId, setSelectedId] = useState<string | number | null>(null);
-  const [zoomSelectedMarker, setZoomSelectedMarker] = useState(false);
 
   const handleMarkerClick = useCallback((id: string | number) => {
-    setZoomSelectedMarker(false);
     setSelectedId((prev) => (prev === id ? null : id));
   }, []);
 
   const handleCardClick = useCallback((id: string | number) => {
-    setZoomSelectedMarker(true);
     setSelectedId((prev) => (prev === id ? null : id));
   }, []);
 
   if (!apiKey) {
     return (
       <div
-        className="flex min-h-[200px] flex-col items-center justify-center gap-3 bg-rose-50 p-6 text-center text-rose-700"
+        className="flex min-h-50 flex-col items-center justify-center gap-3 bg-rose-50 p-6 text-center text-rose-700"
         role="alert"
       >
         <p>
@@ -112,11 +107,9 @@ export default function MapClient({
           <Map
             markers={markers}
             selectedMarkerId={selectedId}
-            zoomSelectedMarker={zoomSelectedMarker}
             onMarkerClick={handleMarkerClick}
             defaultCenter={defaultCenter}
             defaultZoom={defaultZoom}
-            enableClustering={enableClustering}
             renderMarker={renderMarker}
           />
         </Wrapper>
