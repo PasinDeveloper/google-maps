@@ -245,8 +245,42 @@ export default function Map({
   );
 
   return (
-    <div className="map-container">
-      <div ref={mapDivRef} className="map-canvas" />
+    <div className="relative h-full w-full">
+      <div ref={mapDivRef} className="h-full w-full" />
+      <div className="pointer-events-none absolute right-4 top-4 z-10 flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={handleZoomIn}
+          className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200/80 bg-white text-slate-900 shadow-[0_12px_30px_rgba(15,23,42,0.16)] backdrop-blur transition hover:-translate-y-0.5 hover:border-blue-500 hover:text-blue-600"
+          aria-label="Zoom in"
+        >
+          <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+            <path
+              d="M12 5v14M5 12h14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
+        <button
+          type="button"
+          onClick={handleZoomOut}
+          className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200/80 bg-white text-slate-900 shadow-[0_12px_30px_rgba(15,23,42,0.16)] backdrop-blur transition hover:-translate-y-0.5 hover:border-blue-500 hover:text-blue-600"
+          aria-label="Zoom out"
+        >
+          <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+            <path
+              d="M5 12h14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
+      </div>
       {map &&
         markers
           .filter((marker) => !clusteredMarkerIds.has(marker.id))

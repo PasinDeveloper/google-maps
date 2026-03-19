@@ -34,22 +34,90 @@ export default function MarkerList({
   selectedId,
   onCardClick,
 }: MarkerListProps) {
-  const selectedRef = useRef<HTMLButtonElement | null>(null);
+  const listRef = useRef<HTMLElement | null>(null);
+  const cardRefs = useRef(new Map<string, HTMLButtonElement>());
 
-  // Scroll selected card into view.
-  useEffect(() => {
-    if (selectedRef.current) {
-      selectedRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-      });
+  const getCardKey = (id: string | number) => String(id);
+
+  const setCardRef = (id: string | number, node: HTMLButtonElement | null) => {
+    const cardKey = getCardKey(id);
+
+    if (node) {
+      cardRefs.current.set(cardKey, node);
+      return;
     }
+
+    cardRefs.current.delete(cardKey);
+  };
+
+  const getScrollContainer = (element: HTMLElement) => {
+    let current: HTMLElement | null = element.parentElement;
+
+    while (current) {
+      const { overflowY } = window.getComputedStyle(current);
+      const canScroll = /(auto|scroll|overlay)/.test(overflowY);
+
+      if (canScroll && current.scrollHeight > current.clientHeight) {
+        return current;
+      }
+
+      current = current.parentElement;
+    }
+
+    return null;
+  };
+
+  useEffect(() => {
+    if (selectedId === null || !listRef.current) {
+      return;
+    }
+
+    const selectedCard = cardRefs.current.get(getCardKey(selectedId));
+
+    if (!selectedCard) {
+      return;
+    }
+
+    const listPanel = getScrollContainer(selectedCard) ?? listRef.current;
+
+    if (!listPanel) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      const panelRect = listPanel.getBoundingClientRect();
+      const cardRect = selectedCard.getBoundingClientRect();
+
+      const scrollPadding = 16;
+      const nextScrollTop =
+        cardRect.top < panelRect.top + scrollPadding
+          ? listPanel.scrollTop + cardRect.top - panelRect.top - scrollPadding
+          : cardRect.bottom > panelRect.bottom - scrollPadding
+            ? listPanel.scrollTop +
+              cardRect.bottom -
+              panelRect.bottom +
+              scrollPadding
+            : null;
+
+      if (nextScrollTop !== null) {
+        listPanel.scrollTo({
+          top: nextScrollTop,
+          behavior: "smooth",
+        });
+      }
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
   }, [selectedId]);
 
   return (
-    <nav className="marker-list" aria-label="Location list">
-      <h2 className="marker-list__heading">Locations</h2>
-      <ul className="marker-list__items" role="list">
+    <nav ref={listRef} className="px-4 py-4 md:px-5" aria-label="Location list">
+      <h2 className="mb-3 border-b-2 border-slate-200 pb-2 text-lg font-bold text-slate-900">
+        Locations
+      </h2>
+      <ul className="flex list-none flex-col gap-2" role="list">
         <AnimatePresence initial={false}>
           {markers.map((marker) => {
             const isSelected = marker.id === selectedId;
@@ -63,10 +131,13 @@ export default function MarkerList({
                 layout
               >
                 <motion.button
-                  ref={isSelected ? selectedRef : null}
-                  className={clsx("marker-card", {
-                    "marker-card--selected": isSelected,
-                  })}
+                  ref={(node) => setCardRef(marker.id, node)}
+                  className={clsx(
+                    "flex w-full cursor-pointer items-start gap-2.5 rounded-xl border bg-white p-3 text-left transition-colors transition-shadow duration-150",
+                    "border-slate-200 shadow-sm hover:border-blue-500 hover:shadow-[0_2px_8px_rgba(66,133,244,0.18)]",
+                    isSelected &&
+                      "border-blue-500 bg-blue-50 shadow-[0_2px_10px_rgba(66,133,244,0.25)]",
+                  )}
                   variants={selectedVariants}
                   animate={isSelected ? "selected" : "rest"}
                   onClick={() => onCardClick(marker.id)}
@@ -74,19 +145,24 @@ export default function MarkerList({
                   aria-label={`Select ${marker.title ?? String(marker.id)}`}
                   type="button"
                 >
-                  <div className="marker-card__icon" aria-hidden="true">
+                  <div
+                    className="mt-0.5 shrink-0 text-[1.4rem] leading-none"
+                    aria-hidden="true"
+                  >
                     📍
                   </div>
-                  <div className="marker-card__content">
+                  <div className="flex min-w-0 flex-col gap-0.5">
                     {marker.title && (
-                      <span className="marker-card__title">{marker.title}</span>
+                      <span className="truncate text-sm font-semibold text-slate-900">
+                        {marker.title}
+                      </span>
                     )}
                     {marker.description && (
-                      <span className="marker-card__description">
+                      <span className="line-clamp-2 text-xs text-slate-600">
                         {marker.description}
                       </span>
                     )}
-                    <span className="marker-card__coords">
+                    <span className="text-[0.72rem] tabular-nums text-slate-400">
                       {marker.lat.toFixed(4)}, {marker.lng.toFixed(4)}
                     </span>
                   </div>

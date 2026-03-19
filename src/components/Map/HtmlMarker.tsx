@@ -24,9 +24,11 @@ function DefaultMarkerContent({ marker }: { marker: MarkerData }) {
   return (
     <>
       {marker.title ? (
-        <span className="html-marker__label">{marker.title}</span>
+        <span className="mb-[3px] whitespace-nowrap rounded-md border border-blue-500 bg-white px-1.5 py-0.5 text-[0.72rem] font-semibold text-slate-900 shadow-[0_1px_4px_rgba(0,0,0,0.15)] transition-colors duration-150 group-[.is-selected]:border-blue-600 group-[.is-selected]:bg-blue-500 group-[.is-selected]:text-white">
+          {marker.title}
+        </span>
       ) : null}
-      <div className="html-marker__pin" />
+      <div className="h-4 w-4 rounded-[50%_50%_50%_0] border-[2.5px] border-white bg-blue-500 shadow-[0_2px_6px_rgba(66,133,244,0.4)] transition duration-150 group-hover:scale-120 group-hover:bg-rose-500 group-[.is-selected]:scale-120 group-[.is-selected]:bg-rose-500 [transform:rotate(-45deg)]" />
     </>
   );
 }
@@ -71,7 +73,12 @@ function createOverlayClass(
 
     onAdd(): void {
       this.container = document.createElement("div");
-      this.container.className = `html-marker${this.isSelected ? " html-marker--selected" : ""}`;
+      this.container.className = [
+        "group absolute z-[1] flex -translate-x-1/2 -translate-y-full cursor-pointer flex-col items-center select-none",
+        this.isSelected ? "is-selected z-[2]" : "",
+      ]
+        .join(" ")
+        .trim();
       this.container.setAttribute("role", "button");
       this.container.setAttribute(
         "aria-label",
@@ -113,7 +120,9 @@ function createOverlayClass(
     setSelected(s: boolean): void {
       this.isSelected = s;
       if (!this.container) return;
-      this.container.classList.toggle("html-marker--selected", s);
+      this.container.classList.toggle("is-selected", s);
+      this.container.classList.toggle("z-[2]", s);
+      this.container.classList.toggle("z-[1]", !s);
     }
 
     setOnClick(handler: (id: string | number) => void): void {

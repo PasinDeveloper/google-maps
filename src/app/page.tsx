@@ -167,25 +167,34 @@ const SAMPLE_MARKERS: MarkerData[] = [
 
 export default function HomePage() {
   return (
-    <main className="demo-layout">
+    <main className="flex h-screen flex-col">
       <MapClient
         markers={SAMPLE_MARKERS}
         defaultCenter={{ lat: 46.2044, lng: 6.1432 }}
         defaultZoom={13}
         renderMarker={({ marker, isSelected }) => (
           <article
-            className={`custom-marker-card${isSelected ? " custom-marker-card--selected" : ""}`}
+            className={[
+              "grid min-w-47.5 max-w-60 gap-1.5 rounded-2xl border border-slate-900/10 bg-white/95 px-3.5 py-3 text-slate-900 shadow-[0_14px_30px_rgba(15,23,42,0.18)] backdrop-blur-sm transition duration-200",
+              "origin-bottom hover:-translate-y-1 hover:scale-[1.02] hover:border-blue-600/45 hover:shadow-[0_18px_36px_rgba(37,99,235,0.24)]",
+              isSelected &&
+                "-translate-y-1 scale-[1.02] border-blue-600/45 shadow-[0_18px_36px_rgba(37,99,235,0.24)]",
+            ].join(" ")}
           >
-            <span className="custom-marker-card__eyebrow">Featured stop</span>
+            <span className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-blue-600">
+              Featured stop
+            </span>
             {marker.title ? (
-              <h2 className="custom-marker-card__title">{marker.title}</h2>
+              <h2 className="text-base font-bold leading-tight">
+                {marker.title}
+              </h2>
             ) : null}
             {marker.description ? (
-              <p className="custom-marker-card__description">
+              <p className="text-[0.78rem] leading-[1.45] text-slate-600">
                 {marker.description}
               </p>
             ) : null}
-            <span className="custom-marker-card__coords">
+            <span className="text-[0.72rem] tabular-nums text-slate-500">
               {marker.lat.toFixed(4)}, {marker.lng.toFixed(4)}
             </span>
           </article>

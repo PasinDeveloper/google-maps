@@ -23,8 +23,11 @@ function MapStatusView({ status }: { readonly status: Status }) {
 
   if (isLoading) {
     return (
-      <div className="map-status map-status--loading">
-        <div className="map-status__spinner" aria-label="Loading map…" />
+      <div className="flex h-full min-h-[200px] flex-col items-center justify-center gap-3 p-6 text-center text-slate-600">
+        <div
+          className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-blue-500"
+          aria-label="Loading map…"
+        />
         <p>Loading map…</p>
       </div>
     );
@@ -32,7 +35,10 @@ function MapStatusView({ status }: { readonly status: Status }) {
 
   if (isError) {
     return (
-      <div className="map-status map-status--error" role="alert">
+      <div
+        className="flex h-full min-h-[200px] flex-col items-center justify-center gap-3 bg-rose-50 p-6 text-center text-rose-700"
+        role="alert"
+      >
         <p>
           Failed to load Google Maps. Please check your{" "}
           <code>NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> environment variable.
@@ -63,18 +69,24 @@ export default function MapClient({
   renderMarker,
 }: MapClientProps) {
   const [selectedId, setSelectedId] = useState<string | number | null>(null);
+  const [zoomSelectedMarker, setZoomSelectedMarker] = useState(false);
 
   const handleMarkerClick = useCallback((id: string | number) => {
+    setZoomSelectedMarker(false);
     setSelectedId((prev) => (prev === id ? null : id));
   }, []);
 
   const handleCardClick = useCallback((id: string | number) => {
+    setZoomSelectedMarker(true);
     setSelectedId((prev) => (prev === id ? null : id));
   }, []);
 
   if (!apiKey) {
     return (
-      <div className="map-status map-status--error" role="alert">
+      <div
+        className="flex min-h-[200px] flex-col items-center justify-center gap-3 bg-rose-50 p-6 text-center text-rose-700"
+        role="alert"
+      >
         <p>
           <strong>NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</strong> is not set. Add it to
           your <code>.env.local</code> file to enable the map.
@@ -84,15 +96,15 @@ export default function MapClient({
   }
 
   return (
-    <div className="map-client-layout">
-      <aside className="map-client-panel">
+    <div className="flex h-full flex-1 flex-col overflow-hidden md:flex-row">
+      <aside className="w-full shrink-0 overflow-y-auto border-b border-slate-200 bg-white shadow-[2px_0_8px_rgba(0,0,0,0.06)] md:h-full md:w-80 md:border-r md:border-b-0">
         <MarkerList
           markers={markers}
           selectedId={selectedId}
           onCardClick={handleCardClick}
         />
       </aside>
-      <div className="map-client-map">
+      <div className="relative h-[60vh] flex-1 overflow-hidden md:h-full">
         <Wrapper
           apiKey={apiKey}
           render={(status) => <MapStatusView status={status} />}
@@ -100,6 +112,7 @@ export default function MapClient({
           <Map
             markers={markers}
             selectedMarkerId={selectedId}
+            zoomSelectedMarker={zoomSelectedMarker}
             onMarkerClick={handleMarkerClick}
             defaultCenter={defaultCenter}
             defaultZoom={defaultZoom}
