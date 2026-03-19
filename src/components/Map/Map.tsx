@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useFitBounds } from "@/hooks/useFitBounds";
 import { useMapEvents } from "@/hooks/useMapEvents";
 import HtmlMarker from "./HtmlMarker";
@@ -162,7 +168,7 @@ export default function Map({
             onClick={handleMarkerClick}
             renderMarker={renderMarker}
           />
-          ))}
+        ))}
     </div>
   );
 }
