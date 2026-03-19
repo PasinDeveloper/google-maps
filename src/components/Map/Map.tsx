@@ -182,7 +182,13 @@ export default function Map({
 
       map.panTo({ lat: found.lat, lng: found.lng });
     }
-  }, [animateMapCenter, map, markers, selectedMarkerId, shouldZoomToSelectedMarker]);
+  }, [
+    animateMapCenter,
+    map,
+    markers,
+    selectedMarkerId,
+    shouldZoomToSelectedMarker,
+  ]);
 
   const handleMarkerClick = useCallback(
     (id: string | number) => {
